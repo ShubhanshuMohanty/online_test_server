@@ -7,6 +7,7 @@ from rest_framework.mixins import ListModelMixin,CreateModelMixin,UpdateModelMix
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
+from rest_framework import generics, permissions
 # Create your views here.
 class RegisterUserView(APIView):
     def post(self, request):
@@ -41,3 +42,11 @@ class ProfileRetrieveUpdateDelete(GenericAPIView,RetrieveModelMixin,UpdateModelM
         return self.partial_update(request, *args, **kwargs)
     def delete(self,request,*args,**kwargs):
         return self.destroy(request,*args,**kwargs)
+    
+class ProfileDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        print("user=",self.request.user)
+        return Profile.objects.get(user=self.request.user)
