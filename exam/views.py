@@ -1,6 +1,6 @@
 from django.shortcuts import render
-from .serializers import McqQuestionSerializer
-from .models import McqQuestion
+from .serializers import McqQuestionSerializer, CourseSerializer, BatchSerializer,StudentExamRecordSerializer
+from .models import McqQuestion, Course, Batch , StudentExamRecord
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import ListModelMixin,CreateModelMixin,UpdateModelMixin,RetrieveModelMixin,DestroyModelMixin
 from rest_framework.views import APIView
@@ -41,3 +41,40 @@ class UniqueFieldApiView(APIView):
             'exam_name':list(exam_name),
             'batch':list(batch)
         })
+
+# list & create API view for Course
+class CourseListCreate(GenericAPIView,ListModelMixin,CreateModelMixin):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+    
+class BatchListCreate(GenericAPIView,ListModelMixin,CreateModelMixin):
+    queryset = Batch.objects.all()
+    serializer_class = BatchSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+    
+class StudentExamRecordListCreate(GenericAPIView,ListModelMixin,CreateModelMixin):
+    queryset = StudentExamRecord.objects.all()
+    serializer_class = StudentExamRecordSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+class UniqueTestName(APIView):
+    def get(self, request):
+        test_names = McqQuestion.objects.values_list('test_name', flat=True).distinct()
+        return Response(test_names)
+    # {'test_names': list(test_names)}
