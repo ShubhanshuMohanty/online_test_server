@@ -50,6 +50,9 @@ class StudentExamRecord(models.Model):
 
     class Meta:
         unique_together = ('student', 'exam')
+    
+    def __str__(self):
+        return self.student.username + " - " + self.exam.name
 
 class Test(models.Model):
     name = models.CharField(max_length=100)

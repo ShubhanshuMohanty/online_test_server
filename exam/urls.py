@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import McqQuestionListCreate,McqRetrieveUpdateDelete,UniqueFieldApiView,CourseListCreate,BatchListCreate,StudentExamRecordListCreate,UniqueTestName
+from .views import McqQuestionListCreate,McqRetrieveUpdateDelete,UniqueFieldApiView,CourseListCreate,BatchListCreate,StudentExamRecordListCreate,UniqueTestName,TestDataDetails,StudentExamRecordViewSet
 urlpatterns = [
     path('mcq/',McqQuestionListCreate.as_view(),name="mcq_list_create" ),
     path('mcq/<int:pk>/',McqRetrieveUpdateDelete.as_view(),name="mcq_retrieve_update_delete" ),
@@ -8,5 +8,6 @@ urlpatterns = [
     path('batch/',BatchListCreate.as_view(),name="batch_list_create" ),
     path('student_exam_record/',StudentExamRecordListCreate.as_view(),name="student_exam_record_list_create" ),
     path('unique_test_name/', UniqueTestName.as_view(), name="unique_test_name" ),
-
+    path('test_data/', TestDataDetails.as_view(), name="test_data_details" ),
+    path('student_exam_record/<str:exam_id>/', StudentExamRecordViewSet.as_view(), name="student_exam_record_detail" ),
 ]

@@ -1,11 +1,17 @@
+from datetime import timezone
 from django.shortcuts import render
-from .serializers import McqQuestionSerializer, CourseSerializer, BatchSerializer,StudentExamRecordSerializer
-from .models import McqQuestion, Course, Batch , StudentExamRecord
+from .serializers import McqQuestionSerializer, CourseSerializer, BatchSerializer,StudentExamRecordSerializer, TestSerializer
+from .models import McqQuestion, Course, Batch , StudentExamRecord,Test
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import ListModelMixin,CreateModelMixin,UpdateModelMixin,RetrieveModelMixin,DestroyModelMixin
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
+from rest_framework import generics, permissions
+from rest_framework.generics import get_object_or_404,ListAPIView
+from rest_framework.exceptions import NotFound
+from user_auth.models import Profile
+from .filters import McqQuestionFilter
 
 # Create your views here.
 
@@ -14,7 +20,8 @@ class McqQuestionListCreate(GenericAPIView,ListModelMixin,CreateModelMixin):
     queryset = McqQuestion.objects.all()
     serializer_class = McqQuestionSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['exam_name', 'batch']
+    # filterset_fields = ['exam_name', 'batch', 'test_name']
+    filterset_class = McqQuestionFilter
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -74,7 +81,96 @@ class StudentExamRecordListCreate(GenericAPIView,ListModelMixin,CreateModelMixin
         return self.create(request, *args, **kwargs)
 
 class UniqueTestName(APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
+        # print("request user =", request.user)
         test_names = McqQuestion.objects.values_list('test_name', flat=True).distinct()
         return Response(test_names)
     # {'test_names': list(test_names)}
+
+
+#unoptimised code for test data details
+'''
+class TestDataDetails(ListAPIView):
+    serializer_class = TestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        print("request user =", user)
+        try:
+            batch = Profile.objects.get(user=user).batch
+            incomplete_test_ids = StudentExamRecord.objects.filter(
+                student=user,
+                is_completed=False
+            )#.values_list('exam', flat=True)
+            incomple_exam_name=[record.exam.name for record in incomplete_test_ids]
+            print("incomplete exam names =", incomple_exam_name)
+            
+            print("user batch =", batch)
+            ts=Test.objects.filter(batch=batch)
+            matching_tests = []
+            for test in ts:
+                print("test name =", str(test.name))
+                if str(test.name) in incomple_exam_name:
+                    matching_tests.append(test)
+                print("matching tests =", test)
+            print("matching tests =", matching_tests)
+            print("ts =", ts)
+            return matching_tests
+            # return Test.objects.filter(batch=batch)
+        except Profile.DoesNotExist:
+            raise NotFound(detail="Profile not found for this user.")
+'''
+
+#optimize code for test data details
+# '''
+class TestDataDetails(ListAPIView):
+    serializer_class = TestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        print("Request user:", user)
+
+        try:
+            profile = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            raise NotFound(detail="Profile not found for this user.")
+
+        batch = profile.batch
+        print("User batch:", batch)
+
+        # Get names of incomplete exams
+        incomplete_records = StudentExamRecord.objects.filter(student=user, is_completed=False)
+        incomplete_exam_names = incomplete_records.values_list('exam__name', flat=True)
+
+        print("Incomplete exam names:", list(incomplete_exam_names))
+
+        # Filter tests by batch and name match
+        matching_tests = Test.objects.filter(batch=batch, name__in=incomplete_exam_names)
+
+        print("Matching tests:", list(matching_tests))
+        return matching_tests
+# '''
+
+# update
+class StudentExamRecordViewSet(APIView):
+    permission_classes=[permissions.IsAuthenticated]
+    def patch(self,request,exam_id):
+        student=request.user
+        exam=exam_id
+        score=request.data.get('score', None)
+        print(f"student={student}, exam={exam} score={score}")
+        try:
+            exam = Test.objects.get(name=exam_id)
+        except Exception:
+            pass
+        try:
+            record = StudentExamRecord.objects.get(student=student, exam=exam)
+            record.is_completed = True
+            record.completed_at = timezone.now()
+            record.save()
+            return Response({"message": "Exam record updated successfully."})
+        except StudentExamRecord.DoesNotExist:
+            return Response({"error": "Exam record not found."}, status=404)

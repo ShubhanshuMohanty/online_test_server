@@ -10,19 +10,19 @@ class AdminMcqQuestion(admin.ModelAdmin):
 
 @admin.register(Batch)
 class AdminBatch(admin.ModelAdmin):
-    list_display = ('batch_name',)
+    list_display = ('id','batch_name',)
     search_fields = ('batch_name',)
     ordering = ('-id',)
 
 @admin.register(Course)
 class AdminCourse(admin.ModelAdmin):
-    list_display = ('course_name',)
+    list_display = ('id','course_name',)
     search_fields = ('course_name',)
-    ordering = ('-id',)
+    # ordering = ('-id',)
 
 @admin.register(StudentExamRecord)
 class AdminStudentExamRecord(admin.ModelAdmin):
-    list_display = ('student', 'exam', 'completed_at', 'score')
+    list_display = ('student', 'exam','is_completed', 'completed_at', 'score')
 
 @admin.register(Test)
 class AdminTest(admin.ModelAdmin):
