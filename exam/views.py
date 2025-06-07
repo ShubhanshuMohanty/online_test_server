@@ -1,4 +1,4 @@
-from datetime import timezone
+from django.utils import timezone
 from django.shortcuts import render
 from .serializers import McqQuestionSerializer, CourseSerializer, BatchSerializer,StudentExamRecordSerializer, TestSerializer
 from .models import McqQuestion, Course, Batch , StudentExamRecord,Test
@@ -169,6 +169,7 @@ class StudentExamRecordViewSet(APIView):
         try:
             record = StudentExamRecord.objects.get(student=student, exam=exam)
             record.is_completed = True
+            record.score = score
             record.completed_at = timezone.now()
             record.save()
             return Response({"message": "Exam record updated successfully."})

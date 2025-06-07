@@ -49,4 +49,5 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         print("user=",self.request.user)
+        print("dfg=",Profile.objects.get(user=self.request.user))
         return Profile.objects.get(user=self.request.user)
